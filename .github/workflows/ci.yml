@@ -2,17 +2,32 @@ name: CI - Security & Quality
 
 on:
   push:
-    branches: [ main ]
+    branches: [ 'main', 'feature/**' ]
   pull_request:
-    branches: [ main ]
+    branches: [ 'main', 'feature/**' ]
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  direct-push-guard:
+    name: Direct Push Guard
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Block Direct Push
+        run: |
+          echo "DIRECT PUSH DETECTED!"
+          echo "Direct pushes to the 'main' branch are prohibited."
+          echo "Please create a feature branch and submit a Pull Request instead."
+          exit 1
+
   security-audit:
     name: Security Vulnerability Scan
+    # Don't run if the guard fails, but keep it running for other branches/PRs
+    needs: [] 
     runs-on: ubuntu-latest
+    if: github.event_name != 'push' || github.ref != 'refs/heads/main'
     steps:
       - uses: actions/checkout@v6
       - name: Set up Python
@@ -29,6 +44,7 @@ jobs:
   code-quality:
     name: Code Quality & Linting
     runs-on: ubuntu-latest
+    if: github.event_name != 'push' || github.ref != 'refs/heads/main'
     steps:
       - name: Checkout Current Branch
         uses: actions/checkout@v6
