@@ -1,0 +1,17 @@
+[MASTER]
+ignore=bin,boolean,cachecontrol,certifi,charset_normalizer,cyclonedx,defusedxml,filelock,idna,license_expression,markdown_it,mdurl,msgpack,packageurl,packaging,pip,pip_api,pip_audit,platformdirs,py_serializable,pygments,pyparsing,requests,rich,sortedcontainers,tomli,tomli_w,urllib3,pw-browsers,bs4,greenlet,playwright,playwright_stealth,typing_extensions,scripts,astroid,dill,isort,mccabe,tomlkit,include
+
+[MESSAGES CONTROL]
+disable=
+    C0114, # missing-module-docstring
+    C0115, # missing-class-docstring
+    C0116, # missing-function-docstring
+    W0718, # broad-exception-caught
+    C0301, # line-too-long
+    C0103, # invalid-name
+    R0903, # too-few-public-methods
+
+[REPORTS]
+output-format=text
+reports=no
+score=yes

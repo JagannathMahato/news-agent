@@ -8,4 +8,5 @@ dependencies = [
     "playwright",
     "playwright-stealth",
     "beautifulsoup4",
+    "pylint",
 ]

@@ -1,0 +1,83 @@
+name: CI - Security & Quality
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  security-audit:
+    name: Security Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pip-audit
+      - name: Run pip-audit
+        run: pip-audit
+
+  code-quality:
+    name: Code Quality & Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Current Branch
+        uses: actions/checkout@v4
+        with:
+          path: current
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pylint playwright playwright-stealth beautifulsoup4
+
+      - name: Run Pylint Check
+        working-directory: current
+        run: python scripts/lint_check.py
+
+      - name: Compare with Base Branch (for PRs)
+        if: github.event_name == 'pull_request'
+        run: |
+          # Checkout the base branch to a separate directory
+          git clone https://github.com/${{ github.repository }}.git base-branch
+          cd base-branch
+          git checkout ${{ github.base_ref }}
+          
+          # Install dependencies in base branch if needed (already installed globally)
+          
+          # Get base score
+          echo "Calculating base branch score..."
+          python ../current/scripts/lint_check.py > base_score.log || true
+          BASE_SCORE=$(grep "Current Pylint Score:" base_score.log | grep -oE "[0-9.]+" | head -1)
+          
+          # Get current score
+          cd ../current
+          python scripts/lint_check.py > current_score.log || true
+          CURRENT_SCORE=$(grep "Current Pylint Score:" current_score.log | grep -oE "[0-9.]+" | head -1)
+          
+          echo "Base Score: $BASE_SCORE"
+          echo "Current Score: $CURRENT_SCORE"
+          
+          # Comparison logic
+          python -c "
+          base = float('$BASE_SCORE' or 0)
+          curr = float('$CURRENT_SCORE' or 0)
+          print(f'Comparison: {base} -> {curr}')
+          if curr < base:
+              print('WARNING: Code quality decreased!')
+          elif curr > base:
+              print('EXCELLENT: Code quality increased!')
+          else:
+              print('STABLE: Code quality is unchanged.')
+          "
